@@ -4,24 +4,12 @@
 parse_devices() {
 	local DEVICES="$1"
 	local lines id vol devname
-
-	
 	mapfile -t lines <<< "$DEVICES"
-
-	# Debug print all lines (optional)
-	#for i in "${!lines[@]}"; do
-	#  echo "Line $i: ${lines[i]}"
-	#done
-
 	for line in "${lines[@]}"; do
 	  id=$(awk '{sub(/\./,"",$1); print $1}' <<< "$line")
 	  vol=$(grep -o '\[.*\]' <<< "$line")
 	  devname=$(sed -E 's/^[0-9]+\. //; s/ \[vol:.*\]$//' <<< "$line")
 	  echo -e "${id}\t${devname#*. }\t${vol}"
-	 # echo "ID: $id"
-	 # echo "Device: ${devname#*. }"
-	 # echo "Volume: $vol"
-	 # echo "----"
 	done
 }
 
@@ -112,7 +100,7 @@ set_video_source() {
 }
 
 adjust_volume() {
-	local type="$1" # sink or source
+	local type="$1" # speaker or mic
 	local devices
 	if [[ "$type" == "speaker" ]]; then
 	  devices=$(list_audio_sinks)
