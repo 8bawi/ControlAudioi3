@@ -5,7 +5,7 @@ parse_devices() {
 	local DEVICES="$1"
 	local lines id vol devname
 
-	# Read lines into an array preserving line boundaries
+	
 	mapfile -t lines <<< "$DEVICES"
 
 	# Debug print all lines (optional)
@@ -13,17 +13,10 @@ parse_devices() {
 	#  echo "Line $i: ${lines[i]}"
 	#done
 
-	# Process each line to extract ID, device name, and volume
 	for line in "${lines[@]}"; do
-	  # Extract and clean ID (remove trailing dot)
 	  id=$(awk '{sub(/\./,"",$1); print $1}' <<< "$line")
-
-	  # Extract volume info: everything inside brackets at the end
 	  vol=$(grep -o '\[.*\]' <<< "$line")
-
 	  devname=$(sed -E 's/^[0-9]+\. //; s/ \[vol:.*\]$//' <<< "$line")
-
-	  # The original script had ${devname#*. } but this removes the first dot and space
 	  echo -e "${id}\t${devname#*. }\t${vol}"
 	 # echo "ID: $id"
 	 # echo "Device: ${devname#*. }"
@@ -82,8 +75,6 @@ show_help() {
 	- notify-send (optional, for notifications)
 
 	Press Enter to close this help message."
-
-	# Show help in rofi message box
 	echo "$help_text" | rofi -e -markup-rows -mesg -dmenu -p "Help"
 }
 
@@ -96,7 +87,6 @@ set_audio_sink() {
 	local devices=$(list_audio_sinks)
 	local values=$(select_device "$devices")
 	read -r id devname <<< "$values"
-	#echo -e "$id\t$devname"> /dev/tty
 	if [ -n "$id" ]; then
 	  wpctl set-default "$id"
 	  notify-send "Audio sink set $devname"
@@ -124,7 +114,7 @@ set_video_source() {
 adjust_volume() {
 	local type="$1" # sink or source
 	local devices
-	if [[ "$type" == "sink" ]]; then
+	if [[ "$type" == "speaker" ]]; then
 	  devices=$(list_audio_sinks)
 	else
 	  devices=$(list_audio_sources)
@@ -134,13 +124,8 @@ adjust_volume() {
 	if [ -z "$id" ]; then
 	  return
 	fi
-
-	# Get current volume (percentage)
 	local current_vol=$(wpctl get-volume "$id" | awk '{printf "%d", $1 * 100}')
-
-	# Prompt for new volume with default current volume
 	local new_vol=$(echo "$current_vol" | rofi -dmenu -p "Volume (0-150%) for $id:")
-
 	if [[ "$new_vol" =~ ^[0-9]+$ ]] && [ "$new_vol" -ge 0 ] && [ "$new_vol" -le 150 ]; then
 	  wpctl set-volume "$id" "$((new_vol))%"
 	  notify-send "Volume set for $type" "$devname : $new_vol%"
@@ -167,10 +152,10 @@ while true; do
 	    set_video_source
 	    ;;
 	  "Adjust Volume Speakers")
-	    adjust_volume sink
+	    adjust_volume speaker
 	    ;;
 	  "Adjust Volume Mic")
-	    adjust_volume source
+	    adjust_volume mic
 	    ;;
 	  "Help")
 	    show_help
