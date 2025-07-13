@@ -1,3 +1,4 @@
+![Rofi Audio Tool Demo](assets/preview.png)
 # Features:
 	- Set default Audio Output (output device)
 	- Set default Audio Mic (input device)
